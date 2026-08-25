@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * Nao contem regra de negocio: apenas sobe o contexto do Spring Boot.
  * Toda a logica fica nas camadas service/, controller/, repository/ etc.
  */
+
 @SpringBootApplication
 public class GateApiApplication {
 

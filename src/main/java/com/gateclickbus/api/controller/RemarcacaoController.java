@@ -21,10 +21,7 @@ public class RemarcacaoController {
 
     @GetMapping("/pendentes")
     public ResponseEntity<List<RemarcacaoResponse>> listarPendentes() {
-        var pendentes = remarcacaoService.listarPendentes().stream()
-                .map(RemarcacaoResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(pendentes);
+        return ResponseEntity.ok(remarcacaoService.listarPendentes());
     }
 
     @PostMapping("/{id}/concluir")

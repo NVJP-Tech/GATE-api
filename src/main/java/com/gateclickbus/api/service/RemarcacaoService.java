@@ -1,5 +1,6 @@
 package com.gateclickbus.api.service;
 
+import com.gateclickbus.api.dto.response.RemarcacaoResponse;
 import com.gateclickbus.api.model.Remarcacao;
 import com.gateclickbus.api.model.Ticket;
 import com.gateclickbus.api.model.Viagem;
@@ -62,8 +63,12 @@ public class RemarcacaoService {
     }
 
     @Transactional(readOnly = true)
-    public List<Remarcacao> listarPendentes() {
-        return remarcacaoRepository.findByStatusOrderByDataHoraAsc(StatusRemarcacao.PENDENTE);
+    public List<RemarcacaoResponse> listarPendentes() {
+        return remarcacaoRepository
+                .findByStatusComTicketOrderByDataHoraAsc(StatusRemarcacao.PENDENTE)
+                .stream()
+                .map(RemarcacaoResponse::fromEntity)
+                .toList();
     }
 
     @Transactional

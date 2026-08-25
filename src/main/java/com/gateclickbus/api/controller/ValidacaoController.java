@@ -23,13 +23,13 @@ public class ValidacaoController {
 
     @PostMapping
     public ResponseEntity<ValidacaoResponse> validar(@Valid @RequestBody ValidacaoRequest request) {
-        ValidacaoEmbarque validacao = validacaoService.validar(
+        ValidacaoResponse response = validacaoService.validar(
                 request.getCodigoQr(),
                 request.getCanalValidacao(),
                 request.getGateId(),
                 request.getLatitude(),
                 request.getLongitude()
         );
-        return ResponseEntity.ok(ValidacaoResponse.fromEntity(validacao));
+        return ResponseEntity.ok(response);
     }
 }

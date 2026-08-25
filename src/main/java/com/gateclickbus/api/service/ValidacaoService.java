@@ -1,6 +1,7 @@
 package com.gateclickbus.api.service;
 
 
+import com.gateclickbus.api.dto.response.ValidacaoResponse;
 import com.gateclickbus.api.exception.TicketNaoEncontradoException;
 import com.gateclickbus.api.model.Gate;
 import com.gateclickbus.api.model.Plataforma;
@@ -43,6 +44,7 @@ public class ValidacaoService {
         this.remarcacaoService = remarcacaoService;
     }
 
+    /*
     @Transactional
     public ValidacaoEmbarque validar(String codigoQr,
                                      CanalValidacao canal,
@@ -50,7 +52,7 @@ public class ValidacaoService {
                                      Double latitude,
                                      Double longitude) {
         // Ticket ticket = ticketRepository.findByCodigoQr(codigoQr)
-         //       .orElseThrow(() -> new TicketNaoEncontradoException(codigoQr));
+        //       .orElseThrow(() -> new TicketNaoEncontradoException(codigoQr));
 
         Ticket ticket = ticketRepository.findByCodigoQrComViagemEPlataforma(codigoQr)
                 .orElseThrow(() -> new TicketNaoEncontradoException(codigoQr));
@@ -73,6 +75,39 @@ public class ValidacaoService {
 
         return validacaoEmbarqueRepository.save(validacao);
     }
+    */
+
+    @Transactional
+    public ValidacaoResponse validar(String codigoQr,
+                                     CanalValidacao canal,
+                                     Long gateId,
+                                     Double latitude,
+                                     Double longitude) {
+
+        Ticket ticket = ticketRepository.findByCodigoQrComViagemEPlataforma(codigoQr)
+                .orElseThrow(() -> new TicketNaoEncontradoException(codigoQr));
+
+        ValidacaoEmbarque validacaoExistente = buscarValidacaoRecente(ticket);
+        if (validacaoExistente != null) {
+            // A conversão ocorre DENTRO do método transacional
+            return ValidacaoResponse.fromEntity(validacaoExistente);
+        }
+        Gate gate = resolverGate(canal, gateId);
+
+        int tempoRestanteMinutos = calcularTempoRestanteMinutos(
+                ticket.getViagem().getDataHoraPartida());
+
+        ResultadoTriagem resultado = decidirResultado(ticket, tempoRestanteMinutos);
+
+        ValidacaoEmbarque validacao = new ValidacaoEmbarque(
+                ticket, gate, canal, latitude, longitude, tempoRestanteMinutos, resultado);
+
+        ticket.setStatus(StatusTicket.VALIDADO);
+
+        ValidacaoEmbarque validacaoSalva = validacaoEmbarqueRepository.save(validacao);
+
+        return ValidacaoResponse.fromEntity(validacaoSalva);
+    }
 
     private ValidacaoEmbarque buscarValidacaoRecente(Ticket ticket) {
         LocalDateTime janela = LocalDateTime.now().minusMinutes(JANELA_IDEMPOTENCIA_MINUTOS);
@@ -84,7 +119,7 @@ public class ValidacaoService {
         }
 
         List<ValidacaoEmbarque> historico = validacaoEmbarqueRepository
-                .findByTicketOrderByDataHoraValidacaoDesc(ticket);
+                .findByTicketComDadosCompletosOrderByDataHoraValidacaoDesc(ticket); // <-- troca aqui
 
         return historico.stream().findFirst()
                 .orElseThrow(() -> new NoSuchElementException(
